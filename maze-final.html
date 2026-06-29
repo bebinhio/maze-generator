@@ -1,0 +1,523 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        #maze_container {
+            position: relative;
+            margin: 1em auto;
+            width: fit-content;
+        }
+
+        #maze {
+            position: relative;
+        }
+
+        #maze div {
+            display: flex;
+        }
+
+        #maze div div {
+            position: relative;
+            width: 3.5em;
+            height: 3.5em;
+        }
+
+        #maze div div::after {
+            position: absolute;
+            left: -3px;
+            top: -4px;
+            text-align: center;
+            text-shadow: 0 0 1px black;
+            font-size: 1.2em;
+            z-index: 10;
+        }
+
+        #maze div div.wall,
+        #maze div div.nubbin.wall {
+            background-color: #454545;
+            /* background-image: linear-gradient(45deg, rgba(0,0,0,0.2) 45%, transparent 55%), linear-gradient(to bottom, rgba(0,0,0,0.2) 45%, transparent 55%); */
+            background-size: 0.5em 0.5em;
+        }
+
+        #maze div div:nth-child(odd) {
+            width: .1em;
+        }
+
+        #maze div:nth-child(odd) div {
+            height: .1em;
+        }
+
+        #maze_output {
+            display: flex;
+            margin: 0.5em auto;
+        }
+
+        #maze_score,
+        #maze_message {
+            font-family: fantasy;
+            font-weight: bold;
+            font-size: 1em;
+        }
+
+        #maze_score {
+            flex: 1;
+            white-space: nowrap;
+            text-align: left;
+        }
+
+        #maze_score::before {
+            content: "Score: ";
+        }
+
+        #maze_score.has-key::after {
+            content: "\00a0\1F511";
+        }
+
+        #maze_message {
+            flex: 3;
+            text-align: right;
+        }
+
+        @media print {
+            #maze div div:nth-child(odd) {
+                width: 2px !important;
+            }
+            #maze div:nth-child(odd) div {
+                height: 2px !important;
+            }
+        }
+    </style>
+
+    <script>
+        class MazeBuilder {
+
+            // Original JavaScript code by Chirp Internet: www.chirpinternet.eu
+            // Please acknowledge use of this code by including this header.
+
+            constructor(width, height) {
+
+                this.width = width;
+                this.height = height;
+
+                this.cols = 2 * this.width + 1;
+                this.rows = 2 * this.height + 1;
+
+                this.maze = this.initArray([]);
+
+                /* place initial walls */
+
+                this.maze.forEach((row, r) => {
+                    row.forEach((cell, c) => {
+                        switch (r) {
+                            case 0:
+                            case this.rows - 1:
+                                this.maze[r][c] = ["wall"];
+                                break;
+
+                            default:
+                                if ((r % 2) == 1) {
+                                    if ((c == 0) || (c == this.cols - 1)) {
+                                        this.maze[r][c] = ["wall"];
+                                    }
+                                } else if (c % 2 == 0) {
+                                    this.maze[r][c] = ["wall"];
+                                }
+
+                        }
+                    });
+
+                    if (r == 0) {
+                        /* place exit in top row */
+                        let doorPos = this.posToSpace(this.rand(1, this.width));
+                        this.maze[r][doorPos] = ["door", "exit"];
+                    }
+
+                    if (r == this.rows - 1) {
+                        /* place entrance in bottom row */
+                        let doorPos = this.posToSpace(this.rand(1, this.width));
+                        this.maze[r][doorPos] = ["door", "entrance"];
+                    }
+
+                });
+
+                /* start partitioning */
+
+                this.partition(1, this.height - 1, 1, this.width - 1);
+
+            }
+
+            initArray(value) {
+                return new Array(this.rows).fill().map(() => new Array(this.cols).fill(value));
+            }
+
+            rand(min, max) {
+                return min + Math.floor(Math.random() * (1 + max - min));
+            }
+
+            posToSpace(x) {
+                return 2 * (x - 1) + 1;
+            }
+
+            posToWall(x) {
+                return 2 * x;
+            }
+
+            inBounds(r, c) {
+                if ((typeof this.maze[r] == "undefined") || (typeof this.maze[r][c] == "undefined")) {
+                    return false; /* out of bounds */
+                }
+                return true;
+            }
+
+            shuffle(array) {
+                /* sauce: https://stackoverflow.com/a/12646864 */
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            partition(r1, r2, c1, c2) {
+                /* create partition walls
+                   ref: https://en.wikipedia.org/wiki/Maze_generation_algorithm#Recursive_division_method */
+
+                let horiz, vert, x, y, start, end;
+
+                if ((r2 < r1) || (c2 < c1)) {
+                    return false;
+                }
+
+                if (r1 == r2) {
+                    horiz = r1;
+                } else {
+                    x = r1 + 1;
+                    y = r2 - 1;
+                    start = Math.round(x + (y - x) / 4);
+                    end = Math.round(x + 3 * (y - x) / 4);
+                    horiz = this.rand(start, end);
+                }
+
+                if (c1 == c2) {
+                    vert = c1;
+                } else {
+                    x = c1 + 1;
+                    y = c2 - 1;
+                    start = Math.round(x + (y - x) / 3);
+                    end = Math.round(x + 2 * (y - x) / 3);
+                    vert = this.rand(start, end);
+                }
+
+                for (let i = this.posToWall(r1) - 1; i <= this.posToWall(r2) + 1; i++) {
+                    for (let j = this.posToWall(c1) - 1; j <= this.posToWall(c2) + 1; j++) {
+                        if ((i == this.posToWall(horiz)) || (j == this.posToWall(vert))) {
+                            this.maze[i][j] = ["wall"];
+                        }
+                    }
+                }
+
+                let gaps = this.shuffle([true, true, true, false]);
+
+                /* create gaps in partition walls */
+
+                if (gaps[0]) {
+                    let gapPosition = this.rand(c1, vert);
+                    this.maze[this.posToWall(horiz)][this.posToSpace(gapPosition)] = [];
+                }
+
+                if (gaps[1]) {
+                    let gapPosition = this.rand(vert + 1, c2 + 1);
+                    this.maze[this.posToWall(horiz)][this.posToSpace(gapPosition)] = [];
+                }
+
+                if (gaps[2]) {
+                    let gapPosition = this.rand(r1, horiz);
+                    this.maze[this.posToSpace(gapPosition)][this.posToWall(vert)] = [];
+                }
+
+                if (gaps[3]) {
+                    let gapPosition = this.rand(horiz + 1, r2 + 1);
+                    this.maze[this.posToSpace(gapPosition)][this.posToWall(vert)] = [];
+                }
+
+                /* recursively partition newly created chambers */
+
+                this.partition(r1, horiz - 1, c1, vert - 1);
+                this.partition(horiz + 1, r2, c1, vert - 1);
+                this.partition(r1, horiz - 1, vert + 1, c2);
+                this.partition(horiz + 1, r2, vert + 1, c2);
+
+            }
+
+            isGap(...cells) {
+                return cells.every((array) => {
+                    let row, col;
+                    [row, col] = array;
+                    if (this.maze[row][col].length > 0) {
+                        if (!this.maze[row][col].includes("door")) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+            }
+
+            countSteps(array, r, c, val, stop) {
+
+                if (!this.inBounds(r, c)) {
+                    return false; /* out of bounds */
+                }
+
+                if (array[r][c] <= val) {
+                    return false; /* shorter route already mapped */
+                }
+
+                if (!this.isGap([r, c])) {
+                    return false; /* not traversable */
+                }
+
+                array[r][c] = val;
+
+                if (this.maze[r][c].includes(stop)) {
+                    return true; /* reached destination */
+                }
+
+                this.countSteps(array, r - 1, c, val + 1, stop);
+                this.countSteps(array, r, c + 1, val + 1, stop);
+                this.countSteps(array, r + 1, c, val + 1, stop);
+                this.countSteps(array, r, c - 1, val + 1, stop);
+
+            }
+
+            getKeyLocation() {
+
+                let fromEntrance = this.initArray();
+                let fromExit = this.initArray();
+
+                this.totalSteps = -1;
+
+                for (let j = 1; j < this.cols - 1; j++) {
+                    if (this.maze[this.rows - 1][j].includes("entrance")) {
+                        this.countSteps(fromEntrance, this.rows - 1, j, 0, "exit");
+                    }
+                    if (this.maze[0][j].includes("exit")) {
+                        this.countSteps(fromExit, 0, j, 0, "entrance");
+                    }
+                }
+
+                let fc = -1,
+                    fr = -1;
+
+                this.maze.forEach((row, r) => {
+                    row.forEach((cell, c) => {
+                        if (typeof fromEntrance[r][c] == "undefined") {
+                            return;
+                        }
+                        let stepCount = fromEntrance[r][c] + fromExit[r][c];
+                        if (stepCount > this.totalSteps) {
+                            fr = r;
+                            fc = c;
+                            this.totalSteps = stepCount;
+                        }
+                    });
+                });
+
+                return [fr, fc];
+            }
+
+            placeKey() {
+
+                let fr, fc;
+                [fr, fc] = this.getKeyLocation();
+
+                this.maze[fr][fc] = ["key"];
+
+            }
+
+            display(id, path = null) {
+                this.parentDiv = document.getElementById(id);
+
+                if (!this.parentDiv) {
+                    alert("Cannot initialise maze - no element found with id \"" + id + "\"");
+                    return false;
+                }
+
+                while (this.parentDiv.firstChild) {
+                    this.parentDiv.removeChild(this.parentDiv.firstChild);
+                }
+
+                const container = document.createElement("div");
+                container.id = "maze";
+                container.dataset.steps = this.totalSteps;
+
+                this.maze.forEach((row, rowIndex) => {
+                    let rowDiv = document.createElement("div");
+                    row.forEach((cell, cellIndex) => {
+                        let cellDiv = document.createElement("div");
+                        if (cell) {
+                            cellDiv.className = cell.join(" ");
+                        }
+                        rowDiv.appendChild(cellDiv);
+                    });
+                    container.appendChild(rowDiv);
+                });
+
+                // Draw the path if it exists
+                // if (path) {
+                //     for (let i = 0; i < path.length - 1; i++) {
+                //     let [r1, c1] = path[i];
+                //     let [r2, c2] = path[i + 1];
+                //     let cellDiv = container.childNodes[r1].childNodes[c1];
+                //     let pathLine = document.createElement("div");
+                //     pathLine.style.position = "absolute";
+                //     pathLine.style.backgroundColor = "red";
+
+                //     if (r1 === r2) {
+                //         // Horizontal line
+                //         pathLine.style.left = "50%";
+                //         pathLine.style.top = c1 < c2 ? "50%" : "50%";
+                //         pathLine.style.width = "100%";
+                //         pathLine.style.height = "1px";
+                //     } else {
+                //         // Vertical line
+                //         pathLine.style.left = r1 < r2 ? "50%" : "50%";
+                //         pathLine.style.top = "50%";
+                //         pathLine.style.width = "1px";
+                //         pathLine.style.height = "100%";
+                //     }
+
+                //     pathLine.style.transform = "translate(-50%, -50%)";
+                //     cellDiv.appendChild(pathLine);
+                //     }
+                // }
+
+                if (path) {
+  for (let i = 0; i < path.length; i++) {
+    let [r, c] = path[i];
+    let cellDiv = container.childNodes[r].childNodes[c];
+    cellDiv.style.backgroundColor = "lightgray";
+  }
+}
+
+
+                this.parentDiv.appendChild(container);
+
+                return true;
+            }
+
+
+            findPath() {
+    let startRow, startCol, endRow, endCol;
+    let visited = this.initArray(false);
+
+    // Find the entrance and exit coordinates
+    for (let r = 0; r < this.rows; r++) {
+        for (let c = 0; c < this.cols; c++) {
+            if (this.maze[r][c].includes("entrance")) {
+                startRow = r;
+                startCol = c;
+            }
+            if (this.maze[r][c].includes("exit")) {
+                endRow = r;
+                endCol = c;
+            }
+        }
+    }
+
+    let path = [];
+    let queue = [
+        [startRow, startCol, path]
+    ];
+
+    // Breadth-First Search
+    while (queue.length > 0) {
+        let [currentRow, currentCol, currentPath] = queue.shift();
+
+        // Skip if already visited
+        if (visited[currentRow][currentCol]) {
+            continue;
+        }
+
+        visited[currentRow][currentCol] = true;
+
+        // Check if we've reached the exit
+        if (currentRow === endRow && currentCol === endCol) {
+            return currentPath;
+        }
+
+        // Possible directions to move: up, down, left, right
+        let directions = [
+            [-1, 0],
+            [1, 0],
+            [0, -1],
+            [0, 1]
+        ];
+
+        for (let [dr, dc] of directions) {
+            let newRow = currentRow + dr;
+            let newCol = currentCol + dc;
+
+            // Check if the new cell is within bounds and is a gap (traversable)
+            if (this.inBounds(newRow, newCol) && this.isGap([newRow, newCol])) {
+                let newPath = currentPath.slice();
+                newPath.push([newRow, newCol]);
+                queue.push([newRow, newCol, newPath]);
+            // console.log(this.inBounds(newRow, newCol));
+            // console.log(this.isGap([newRow, newCol]));
+            }
+
+
+        }
+    }
+
+    // Return null if no path is found
+    return null;
+}
+
+
+
+
+        }
+    </script>
+</head>
+
+<body>
+    <div id="maze_container">
+        <!-- -->
+    </div>
+
+    <script>
+        let solutionVisible = false; // To keep track of whether the solution is visible
+    </script>
+
+    <script>
+        let Maze = new MazeBuilder(12, 8);
+        Maze.display("maze_container");
+    </script>
+
+    <button id="toggleSolution">Toggle Solution</button>
+
+    <script>
+        document.getElementById("toggleSolution").addEventListener("click", function () {
+            if (solutionVisible) {
+                // Hide the solution by re-rendering the maze without the path
+                Maze.display("maze_container");
+            } else {
+                // Show the solution
+                let path = Maze.findPath();
+                if (path) {
+                    Maze.display("maze_container", path);
+                }
+            }
+            // Toggle the state
+            solutionVisible = !solutionVisible;
+        });
+    </script>
+
+</body>
+
+</html>
