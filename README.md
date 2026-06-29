@@ -1,43 +1,43 @@
 # Find the Path - Maze Generator
 
-Automatyczny generator unikalnych labiryntów wraz z rozwiązaniami, idealny do masowego tworzenia materiałów do publikacji takich jak "Activity Books" (np. na platformę Amazon KDP).
+An automated generator of unique mazes along with solutions, perfect for bulk creating publication materials like "Activity Books" (e.g., for the Amazon KDP platform).
 
-## 🚀 Możliwości
+## 🚀 Features
 
-- Generuje określoną liczbę unikalnych labiryntów za pomocą algorytmu **Recursive Division**.
-- Znajduje rozwiązanie algorytmem BFS (**Breadth-First Search**).
-- Automatycznie zapisuje labirynty oraz pliki odpowiedzi w formacie **PDF (A4)** z użyciem biblioteki **Puppeteer**.
-- Pozwala na wygenerowanie setek gotowych stron jednym poleceniem.
+- Generates a specified number of unique mazes using the **Recursive Division** algorithm.
+- Finds the solution using the BFS (**Breadth-First Search**) algorithm.
+- Automatically saves mazes and answer files in **PDF (A4)** format using the **Puppeteer** library.
+- Allows generating hundreds of ready-to-use pages with a single command.
 
-## 📋 Wymagania
+## 📋 Requirements
 
-- Node.js (v14 lub nowszy)
+- Node.js (v14 or newer)
 
-## 🛠 Instalacja
+## 🛠 Installation
 
-1. Sklonuj repozytorium:
+1. Clone the repository:
 ```bash
-git clone <adres-repozytorium>
+git clone <repository-url>
 cd find-the-path
 ```
-2. Zainstaluj zależności:
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-## 🎮 Uruchomienie generatora
+## 🎮 Running the generator
 
-Uruchom poniższe polecenie w terminalu, aby wygenerować labirynty w formacie PDF (domyślnie generuje 100 sztuk i zapisuje do folderu wyjściowego):
+Run the following command in the terminal to generate mazes in PDF format (generates 100 pieces by default and saves them to the output folder):
 
 ```bash
 node generate-maze.js
 ```
 
-Pliki zostaną zapisane wewnątrz automatycznie utworzonego podkatalogu `mazes/kids/easy/horizontal`, oddzielnie zagadki i rozwiązania.
+The files will be saved inside an automatically created subdirectory `mazes/kids/easy/horizontal`, separating puzzles and solutions.
 
-## 📂 Struktura katalogów
-- `maze-final.html` - silnik generujący labirynt i interfejs UI w HTML, CSS i JS.
-- `generate-maze.js` - skrypt Node.js wykorzystujący Puppeteer do zautomatyzowanego generowania pojedynczych PDF-ów.
-- `merge-pdfs.js` - skrypt oparty na bibliotece `pdf-lib` służący do łączenia wygenerowanych plików w jeden zbiorczy dokument na potrzeby Amazon KDP.
-- `opis_techniczny.txt` - szczegółowy opis technologiczny i funkcjonalny.
-- `opis_komercyjny.txt` - opis zalet komercyjnych produktu.
+## 📂 Directory structure
+- `maze-final.html` - engine generating the maze and UI interface in HTML, CSS, and JS.
+- `generate-maze.js` - Node.js script using Puppeteer for automated generation of single PDFs.
+- `merge-pdfs.js` - script based on the `pdf-lib` library used to merge generated files into one collective document for Amazon KDP purposes.
+- `opis_techniczny.txt` - detailed technological and functional description.
+- `opis_komercyjny.txt` - description of the product's commercial advantages.
